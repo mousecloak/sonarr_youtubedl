@@ -131,7 +131,7 @@ def ytdl_hooks(d):
 
 def setup_logging(lf_enabled=True, lc_enabled=True, debugging=False):
 
-    log_level = logging.DEBUG if debugging == True else log_level
+    log_level = logging.DEBUG if debugging == True else logging.INFO
     logger = logging.getLogger('sonarr_youtubedl')
     logger.setLevel(log_level)
     log_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
