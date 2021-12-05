@@ -9,10 +9,15 @@ from datetime import datetime
 import schedule
 import time
 import logging
+import argparse
 
+# allow debug arg for verbose logging
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('--debug', action='store_true', help='Enable debug logging')
+args = parser.parse_args()
 
 # setup logger
-logger = setup_logging()
+logger = setup_logging(True, True, args.debug)
 
 date_format = "%Y-%m-%dT%H:%M:%SZ"
 now = datetime.now()
@@ -174,8 +179,7 @@ class SonarrYTDL(object):
                     if 'regex' in wnt:
                         regex = wnt['regex']
                         if 'sonarr' in regex:
-                            ser['sonarr_regex_match'] = regex['sonarr']['match']
-                            ser['sonarr_regex_replace'] = regex['sonarr']['replace']
+                            ser['sonarr_regex'] = regex['sonarr']
                         if 'site' in regex:
                             ser['site_regex_match'] = regex['site']['match']
                             ser['site_regex_replace'] = regex['site']['replace']
@@ -219,10 +223,12 @@ class SonarrYTDL(object):
                 elif eps_date > now:
                     episodes.remove(eps)
                 else:
-                    if 'sonarr_regex_match' in ser:
-                        match = ser['sonarr_regex_match']
-                        replace = ser['sonarr_regex_replace']
-                        eps['title'] = re.sub(match, replace, eps['title'])
+                    if 'sonarr_regex' in ser:
+                        for regex in ser['sonarr_regex']:
+                            match = regex['match']
+                            replace = regex['replace']
+                            logger.debug('Updating episode title {0} with regex {1} and replacement {2}'.format(eps['title'], match, replace))
+                            eps['title'] = re.sub(match, replace, eps['title'])
                     needed.append(eps)
                     continue
             if len(episodes) == 0:
@@ -255,7 +261,7 @@ class SonarrYTDL(object):
             cookie_exists = os.path.exists(cookie_path)
             if cookie_exists is True:
                 ytdlopts.update({
-                    'cookie': cookie_path
+                    'cookiefile': cookie_path
                 })
                 # if self.debug is True:
                 logger.debug('  Cookies file used: {}'.format(cookie_path))
